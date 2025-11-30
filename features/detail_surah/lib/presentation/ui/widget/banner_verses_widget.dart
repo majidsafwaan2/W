@@ -57,7 +57,7 @@ class BannerVersesWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 4.0),
                 Text(
-                  surah.name.translation.id,
+                  surah.name.translation.en,
                   style: kHeading6.copyWith(
                     fontSize: 16.0,
                     color: Colors.white,
@@ -91,7 +91,7 @@ class BannerVersesWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 5.0),
                     Text(
-                      '${surah.numberOfVerses} Ayat',
+                      '${surah.numberOfVerses} Verses',
                       style: kHeading6.copyWith(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 14,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dependencies/dio/dio.dart';
 import 'package:quran/data/models/detail_surah_dto.dart';
 import 'package:quran/data/models/juz_dto.dart';
@@ -15,11 +16,22 @@ class QuranRemoteDataSourceImpl extends QuranRemoteDataSource {
 
   QuranRemoteDataSourceImpl({required this.dio});
 
+  Map<String, dynamic> _parseResponse(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    } else if (data is String) {
+      return json.decode(data) as Map<String, dynamic>;
+    } else {
+      throw Exception('Unexpected response type: ${data.runtimeType}');
+    }
+  }
+
   @override
   Future<List<SurahDTO>> getAllSurah() async {
     try {
       final response = await dio.get('${ApiConstant.baseUrl}surah');
-      return SurahResponseDTO.fromJson(response.data).data;
+      final data = _parseResponse(response.data);
+      return SurahResponseDTO.fromJson(data).data;
     } catch (e) {
       rethrow;
     }
@@ -29,7 +41,8 @@ class QuranRemoteDataSourceImpl extends QuranRemoteDataSource {
   Future<DetailSurahDTO> getDetailSurah(int id) async {
     try {
       final response = await dio.get('${ApiConstant.baseUrl}surah/$id');
-      return DetailSurahResponseDTO.fromJson(response.data).data;
+      final data = _parseResponse(response.data);
+      return DetailSurahResponseDTO.fromJson(data).data;
     } catch (e) {
       rethrow;
     }
@@ -39,7 +52,8 @@ class QuranRemoteDataSourceImpl extends QuranRemoteDataSource {
   Future<JuzDTO> getJuz(int id) async {
     try {
       final response = await dio.get('${ApiConstant.baseUrl}juz/$id');
-      return JuzResponseDTO.fromJson(response.data).data;
+      final data = _parseResponse(response.data);
+      return JuzResponseDTO.fromJson(data).data;
     } catch (e) {
       rethrow;
     }

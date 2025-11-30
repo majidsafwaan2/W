@@ -31,30 +31,33 @@ class CustomFlashWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Flash(
       controller: controller,
-      behavior: FlashBehavior.floating,
       position: positionBottom ? FlashPosition.bottom : FlashPosition.top,
-      borderRadius: BorderRadius.circular(8.0),
-      borderColor:
-          darkTheme ? kPurplePrimary : statusColor(status.toLowerCase()),
-      backgroundGradient: darkTheme
-          ? const LinearGradient(
-              colors: [
-                kDarkPurple,
-                kDarkTheme,
-                kDarkTheme,
-              ],
-            )
-          : const LinearGradient(
-              colors: [
-                Colors.white,
-                kGrey92,
-              ],
-            ),
       forwardAnimationCurve: Curves.easeInCirc,
       reverseAnimationCurve: Curves.easeOutBack,
-      child: DefaultTextStyle(
-        style: const TextStyle(color: kPurplePrimary),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: darkTheme ? kPurplePrimary : statusColor(status.toLowerCase()) ?? Colors.blue,
+            width: 1.0,
+          ),
+          gradient: darkTheme
+              ? const LinearGradient(
+                  colors: [
+                    kDarkPurple,
+                    kDarkTheme,
+                    kDarkTheme,
+                  ],
+                )
+              : const LinearGradient(
+                  colors: [
+                    Colors.white,
+                    kGrey92,
+                  ],
+                ),
+        ),
         child: FlashBar(
+          controller: controller,
           title: Text(
             title,
             style: kHeading5.copyWith(
@@ -83,7 +86,7 @@ class CustomFlashWidget extends StatelessWidget {
           primaryAction: TextButton(
             onPressed: () => controller.dismiss(),
             child: Text(
-              'TUTUP',
+              'CLOSE',
               style: kHeading5.copyWith(
                 color: darkTheme ? kGrey92 : statusColor(status.toLowerCase()),
                 fontSize: 12,

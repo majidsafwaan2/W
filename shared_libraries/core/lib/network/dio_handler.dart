@@ -11,6 +11,7 @@ class DioHandler {
       baseUrl: baseUrl,
       connectTimeout: 50000,
       receiveTimeout: 30000,
+      responseType: ResponseType.json,
     );
     options.headers = _defaultHeader();
     final dio = Dio(options);

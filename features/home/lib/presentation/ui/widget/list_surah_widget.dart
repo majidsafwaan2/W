@@ -106,7 +106,7 @@ class SurahWidget extends StatelessWidget {
                       ),
                       const SizedBox(width: 4.0),
                       Text(
-                        '${surah.numberOfVerses} Ayat',
+                        '${surah.numberOfVerses} Verses',
                         style: kHeading6.copyWith(
                           color: kGrey.withOpacity(0.8),
                           fontSize: 14,
