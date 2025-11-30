@@ -1,28 +1,12 @@
 import 'dart:io';
 import 'package:dio/dio.dart' show Dio, Options, FormData, MultipartFile;
-import 'package:config/api_config.dart' show ApiConfig;
 
 class WhisperApiService {
   final Dio _dio = Dio();
   
   // OpenAI API Key for Whisper transcription
-  // Get from environment variable or api_config.dart
-  static String get openAiApiKey {
-    // Try environment variable first
-    const envKey = String.fromEnvironment('OPENAI_API_KEY');
-    if (envKey.isNotEmpty) {
-      return envKey;
-    }
-    // Fallback to api_config (which should be gitignored)
-    try {
-      // Import api_config if it exists
-      // Note: This will fail if api_config.dart doesn't exist, which is expected
-      // The user should create it with their API key
-      return ApiConfig.openAiApiKey;
-    } catch (e) {
-      throw Exception('OpenAI API key not found. Please set OPENAI_API_KEY environment variable or create lib/config/api_config.dart with your API key');
-    }
-  }
+  // Set your API key here or use environment variable
+  static const String openAiApiKey = 'YOUR_OPENAI_API_KEY_HERE';
   static const String openAiApiUrl = 'https://api.openai.com/v1/audio/transcriptions';
 
   Future<String?> transcribeAudio(String audioFilePath, {bool isRealtime = false}) async {
