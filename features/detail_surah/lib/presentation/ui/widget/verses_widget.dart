@@ -8,7 +8,6 @@ import 'package:dependencies/just_audio/just_audio.dart';
 import 'package:detail_surah/presentation/cubits/bookmark_verses/bookmark_verses_cubit.dart';
 import 'package:detail_surah/presentation/services/audio_recording_service.dart';
 import 'package:detail_surah/presentation/services/recitation_detector_service.dart';
-import 'package:detail_surah/presentation/services/letter_level_detector_service.dart';
 import 'package:detail_surah/presentation/services/whisper_api_service.dart';
 import 'package:detail_surah/presentation/services/arabic_text_utils.dart';
 import 'package:detail_surah/presentation/utils/arabic_numerals.dart';
@@ -27,8 +26,7 @@ class VersesWidget extends StatefulWidget {
   final RecitationSettings? settings;
   final bool isRecording; // External recording trigger
   final Function(RecitationDetectionResult)? onDetectionResult; // Callback for detection result
-  final RecitationDetectionResult? detectionResult; // External detection result (from global recording) - DEPRECATED
-  final LetterLevelDetectionResult? letterDetectionResult; // External letter-level detection result (from global recording)
+  final RecitationDetectionResult? detectionResult; // External detection result (from global recording) - word-level from letter checking
   final bool isCurrentlyPlaying; // Whether this verse is currently being played
   final AudioPlayer? globalPlayer; // Global player for consecutive playback
   final AudioPlayer player = AudioPlayer();
@@ -42,7 +40,6 @@ class VersesWidget extends StatefulWidget {
     this.isRecording = false,
     this.onDetectionResult,
     this.detectionResult,
-    this.letterDetectionResult,
     this.isCurrentlyPlaying = false,
     this.globalPlayer,
   });
@@ -302,11 +299,11 @@ class _VersesWidgetState extends State<VersesWidget> {
     final arabicText = widget.verses.text.arab;
     final words = ArabicTextUtils.splitIntoWords(arabicText);
     
-    // Use external letter-level detection result if available (from global recording), otherwise use local word-level
-    final letterDetectionResult = widget.letterDetectionResult;
+    // Use external detection result if available (from global recording), otherwise use local
+    final detectionResult = widget.detectionResult ?? _localDetectionResult;
     
     // If playing audio, show grey highlight for current/next word
-    if (letterDetectionResult == null && currentWordIndex != null) {
+    if (detectionResult == null && currentWordIndex != null) {
       return Wrap(
         textDirection: TextDirection.rtl,
         alignment: WrapAlignment.end,
@@ -334,7 +331,7 @@ class _VersesWidgetState extends State<VersesWidget> {
       );
     }
     
-    if (letterDetectionResult == null) {
+    if (detectionResult == null) {
       // No detection result, show normal text
       return Text(
         arabicText,
@@ -349,118 +346,55 @@ class _VersesWidgetState extends State<VersesWidget> {
       );
     }
 
-    // Build highlighted text with letter-level colors
-    final letterComparisons = letterDetectionResult.letterComparisons;
-    
-    // Group letter comparisons by word
-    final wordsWithLetters = <int, List<LetterComparison>>{};
-    for (final comparison in letterComparisons) {
-      if (!wordsWithLetters.containsKey(comparison.wordIndex)) {
-        wordsWithLetters[comparison.wordIndex] = [];
-      }
-      wordsWithLetters[comparison.wordIndex]!.add(comparison);
-    }
+    // Build highlighted text with word-level colors (from letter checking)
+    final wordComparisons = detectionResult!.wordComparisons;
 
     return Wrap(
       textDirection: TextDirection.rtl,
       alignment: WrapAlignment.end,
       children: words.asMap().entries.map((entry) {
-        final wordIndex = entry.key;
+        final index = entry.key;
         final word = entry.value;
         
-        // Get letter comparisons for this word
-        final wordLetterComparisons = wordsWithLetters[wordIndex] ?? [];
-        
-        // If no letter comparisons for this word, show it as normal
-        if (wordLetterComparisons.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: Text(
-              '$word ',
-              textAlign: TextAlign.right,
-              style: kHeading6.copyWith(
-                fontSize: textSize,
-                fontWeight: FontWeight.w500,
-                color: widget.prefSetProvider.isDarkTheme
-                    ? Colors.white
-                    : kBlackDark,
-              ),
-            ),
-          );
+        // Find matching comparison
+        final comparison = wordComparisons.firstWhere(
+          (wc) => wc.index == index,
+          orElse: () => WordComparison(
+            word: word,
+            status: WordStatus.correct,
+            index: index,
+          ),
+        );
+
+        Color wordColor;
+        switch (comparison.status) {
+          case WordStatus.correct:
+            wordColor = kGreenAccent;
+            break;
+          case WordStatus.wrong:
+            wordColor = Colors.red;
+            break;
+          case WordStatus.missing:
+            wordColor = kMikadoYellow;
+            break;
         }
-        
-        // Build word with letter-level highlighting
-        final normalizedWord = ArabicTextUtils.normalizeWord(word);
-        final letters = _splitIntoLetters(normalizedWord);
-        
+
+        final currentTextSize = widget.settings?.textSize ?? 28.0;
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2.0),
-          child: Wrap(
-            textDirection: TextDirection.rtl,
-            children: letters.asMap().entries.map((letterEntry) {
-              final letterIndex = letterEntry.key;
-              final letter = letterEntry.value;
-              
-              // Find matching letter comparison
-              final comparison = wordLetterComparisons.firstWhere(
-                (lc) => lc.letterIndex == letterIndex,
-                orElse: () => LetterComparison(
-                  letter: letter,
-                  status: LetterStatus.correct,
-                  wordIndex: wordIndex,
-                  letterIndex: letterIndex,
-                ),
-              );
-
-              Color letterColor;
-              switch (comparison.status) {
-                case LetterStatus.correct:
-                  letterColor = kGreenAccent;
-                  break;
-                case LetterStatus.wrong:
-                  letterColor = Colors.red;
-                  break;
-                case LetterStatus.missing:
-                  letterColor = kMikadoYellow;
-                  break;
-              }
-
-              return Text(
-                letter,
-                textAlign: TextAlign.right,
-                style: kHeading6.copyWith(
-                  fontSize: textSize,
-                  fontWeight: FontWeight.w500,
-                  color: letterColor,
-                  backgroundColor: letterColor.withOpacity(0.2),
-                ),
-              );
-            }).toList(),
+          child: Text(
+            '$word ',
+            textAlign: TextAlign.right,
+            style: kHeading6.copyWith(
+              fontSize: currentTextSize,
+              fontWeight: FontWeight.w500,
+              color: wordColor,
+              backgroundColor: wordColor.withOpacity(0.2),
+            ),
           ),
         );
       }).toList(),
     );
-  }
-  
-  /// Split Arabic word into individual letters
-  List<String> _splitIntoLetters(String word) {
-    final cleaned = word.replaceAll(' ', '');
-    final letters = <String>[];
-    
-    for (int i = 0; i < cleaned.length; i++) {
-      final char = cleaned[i];
-      final codeUnit = char.codeUnitAt(0);
-      
-      // Check if it's an Arabic character (U+0600 to U+06FF)
-      if (codeUnit >= 0x0600 && codeUnit <= 0x06FF) {
-        letters.add(char);
-      } else if (char.trim().isNotEmpty) {
-        // Include other non-space characters
-        letters.add(char);
-      }
-    }
-    
-    return letters;
   }
   
 

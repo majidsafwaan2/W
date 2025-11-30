@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:common/utils/provider/preference_settings_provider.dart';
 import 'package:common/utils/state/view_data_state.dart';
 import 'package:dependencies/bloc/bloc.dart';
@@ -8,15 +7,12 @@ import 'package:dependencies/show_up_animation/show_up_animation.dart';
 import 'package:detail_surah/presentation/bloc/bloc.dart';
 import 'package:detail_surah/presentation/cubits/last_read/last_read_cubit.dart';
 import 'package:detail_surah/presentation/models/recitation_settings.dart';
-import 'package:detail_surah/presentation/ui/widget/banner_verses_widget.dart';
 import 'package:detail_surah/presentation/ui/widget/verses_widget.dart';
 import 'package:detail_surah/presentation/ui/widget/settings_bottom_sheet.dart';
 import 'package:detail_surah/presentation/ui/widget/translation_bottom_sheet.dart';
 import 'package:detail_surah/presentation/ui/widget/listen_bottom_sheet.dart';
 import 'package:detail_surah/presentation/services/recitation_detector_service.dart';
-import 'package:detail_surah/presentation/services/multi_verse_recitation_service.dart';
-import 'package:detail_surah/presentation/services/letter_level_detector_service.dart' show LetterLevelDetectionResult;
-import 'package:detail_surah/presentation/services/multi_verse_letter_service.dart' show MultiVerseLetterRecitationService;
+import 'package:detail_surah/presentation/services/multi_verse_letter_to_word_service.dart' show MultiVerseLetterToWordRecitationService;
 import 'package:detail_surah/presentation/services/audio_recording_service.dart';
 import 'package:detail_surah/presentation/services/whisper_api_service.dart';
 import 'package:quran/domain/entities/detail_surah_entity.dart' show VerseEntity;
@@ -39,10 +35,10 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
   final AudioPlayer _globalPlayer = AudioPlayer();
   bool _isGlobalRecording = false;
   final Map<int, GlobalKey> _verseKeys = {};
-  LetterLevelDetectionResult? _globalLetterDetectionResult; // Single accuracy result for all verses (letter-level)
+  RecitationDetectionResult? _globalDetectionResult; // Single accuracy result for all verses (word-level from letter checking)
   String? _globalRecordingPath; // Path to the global recording
   final AudioRecordingService _globalRecordingService = AudioRecordingService();
-  Map<int, LetterLevelDetectionResult> _verseLetterDetectionResults = {}; // verse index -> letter-level result
+  Map<int, RecitationDetectionResult> _verseDetectionResults = {}; // verse index -> word-level result (from letter checking)
   int _lastRecitedVerseIndex = -1; // Last verse that was actually recited
   int _currentPlayingVerseIndex = -1; // Current verse being played
   bool _isPlayingAllVerses = false; // Whether we're playing all verses consecutively
@@ -134,33 +130,33 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
       
       if (transcription != null && transcription.isNotEmpty && mounted) {
         print('✅ Transcription: "$transcription"');
-        print('🔍 Processing letter-level detection for ${verses.length} verses...');
+        print('🔍 Processing letter-based word-level detection for ${verses.length} verses...');
         
-        // Use letter-level detection
-        final multiResult = MultiVerseLetterRecitationService.detectMultiVerseRecitationAtLetterLevel(
+        // Use letter-level checking but word-level results
+        final multiResult = MultiVerseLetterToWordRecitationService.detectMultiVerseRecitationLetterBasedWordLevel(
           verses,
           transcription,
         );
         
         print('📊 Detection results: accuracy=${multiResult.overallAccuracy}%, verses=${multiResult.lastRecitedVerseIndex + 1}');
         
-        // Store verse-specific letter-level results
+        // Store verse-specific word-level results (from letter checking)
         setState(() {
-          _verseLetterDetectionResults = multiResult.verseResults;
+          _verseDetectionResults = multiResult.verseResults;
           _lastRecitedVerseIndex = multiResult.lastRecitedVerseIndex;
           
           // Create a combined result for display
-          _globalLetterDetectionResult = LetterLevelDetectionResult(
-            letterComparisons: [],
+          _globalDetectionResult = RecitationDetectionResult(
+            wordComparisons: [],
             accuracy: multiResult.overallAccuracy,
-            correctCount: multiResult.totalCorrectLetters,
+            correctCount: multiResult.totalCorrectWords,
             wrongCount: 0,
             missingCount: 0,
-            totalLetters: multiResult.totalLetters,
+            totalWords: multiResult.totalWords,
           );
         });
         
-        print('✅ State updated with letter-level detection results');
+        print('✅ State updated with letter-based word-level detection results');
         
         // Clean up audio file
         await _globalRecordingService.deleteRecordingFile(audioPath);
@@ -454,13 +450,13 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
                                     final path = await _globalRecordingService.startRecording();
                                     if (path != null) {
                                       print('✅ Recording started: $path');
-                                      setState(() {
-                                        _isGlobalRecording = true;
-                                        _globalRecordingPath = path;
-                                        _globalLetterDetectionResult = null; // Clear previous results
-                                        _verseLetterDetectionResults = {}; // Clear verse results
-                                        _lastRecitedVerseIndex = -1; // Reset
-                                      });
+                                    setState(() {
+                                      _isGlobalRecording = true;
+                                      _globalRecordingPath = path;
+                                      _globalDetectionResult = null; // Clear previous results
+                                      _verseDetectionResults = {}; // Clear verse results
+                                      _lastRecitedVerseIndex = -1; // Reset
+                                    });
                                     } else {
                                       print('❌ Failed to start recording');
                                       if (mounted) {
@@ -550,7 +546,7 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
                             child: Column(
                               children: [
                                 // Single accuracy bar (banner removed)
-                                if (_globalLetterDetectionResult != null) ...[
+                                if (_globalDetectionResult != null) ...[
                                   const SizedBox(height: 16.0),
                                   Container(
                                     margin: const EdgeInsets.symmetric(horizontal: 0.0),
@@ -569,7 +565,7 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
                                         ),
                                         const SizedBox(width: 8.0),
                                         Text(
-                                          'Accuracy: ${_globalLetterDetectionResult!.accuracy.toStringAsFixed(1)}%',
+                                          'Accuracy: ${_globalDetectionResult!.accuracy.toStringAsFixed(1)}%',
                                           style: kHeading6.copyWith(
                                             fontSize: 14.0,
                                             fontWeight: FontWeight.w600,
@@ -578,7 +574,7 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
                                         ),
                                         const Spacer(),
                                         Text(
-                                          '${_globalLetterDetectionResult!.correctCount}/${_globalLetterDetectionResult!.totalLetters} correct',
+                                          '${_globalDetectionResult!.correctCount}/${_globalDetectionResult!.totalWords} correct',
                                           style: kHeading6.copyWith(
                                             fontSize: 12.0,
                                             color: prefSetProvider.isDarkTheme
@@ -613,7 +609,7 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
                                               settings: _settings,
                                               isRecording: false, // Disable per-verse recording, use global instead
                                               onDetectionResult: null, // Global recording handles this
-                                              letterDetectionResult: _verseLetterDetectionResults[index], // Only set if this verse was recited
+                                              detectionResult: _verseDetectionResults[index], // Only set if this verse was recited (word-level from letter checking)
                                               isCurrentlyPlaying: _currentPlayingVerseIndex == index, // Highlight current verse
                                               globalPlayer: _globalPlayer, // Pass global player for consecutive playback
                                             );
