@@ -18,7 +18,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final response = await getSurahUsecase.call();
 
       if (response.length() == 0) {
-        emit(state.copyWith(statusSurah: ViewData.noData(message: 'Kosong')));
+        emit(state.copyWith(statusSurah: ViewData.noData(message: 'Empty')));
       } else {
         response.fold(
             (failure) => emit(state.copyWith(

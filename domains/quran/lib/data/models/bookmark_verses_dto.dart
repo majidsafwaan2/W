@@ -28,7 +28,7 @@ class BookmarkVersesDTO {
         audioUri: verse.audio.primary,
         textArab: verse.text.arab,
         transliteration: verse.text.transliteration.en,
-        translation: verse.translation.id,
+        translation: verse.translation.en,
       );
 
   factory BookmarkVersesDTO.fromMap(Map<String, dynamic> map) =>

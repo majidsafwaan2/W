@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     const SizedBox(height: 28.0),
                     ShowUpAnimation(
                       child: Text(
-                        "Assalamu'alaikum",
+                        "Peace be upon you",
                         style: kHeading6.copyWith(
                           fontSize: 18.0,
                           fontWeight: FontWeight.w500,
@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            'Ahlan Wa Sahlan',
+                            'Welcome',
                             style: kHeading6.copyWith(
                               fontSize: 24.0,
                               fontWeight: FontWeight.w700,

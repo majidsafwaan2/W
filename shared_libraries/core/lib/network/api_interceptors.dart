@@ -26,13 +26,18 @@ class ApiInterceptors extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    final prettyString =
-        const JsonEncoder.withIndent('  ').convert(response.data);
-    log(
-      'Status Code: ${response.statusCode}\n'
-      '----------------------------------------------------------------------\n'
-      'Response: $prettyString\n',
-    );
+    try {
+      final prettyString = response.data is String
+          ? response.data
+          : const JsonEncoder.withIndent('  ').convert(response.data);
+      log(
+        'Status Code: ${response.statusCode}\n'
+        '----------------------------------------------------------------------\n'
+        'Response: $prettyString\n',
+      );
+    } catch (e) {
+      log('Error formatting response: $e');
+    }
     return handler.next(response);
   }
 

@@ -83,7 +83,7 @@ class BannerLastReadWidget extends StatelessWidget {
                           child: Text(
                             state.data.isEmpty
                                 ? '-'
-                                : '${state.data[0].numberOfVerses} Ayat',
+                                : '${state.data[0].numberOfVerses} Verses',
                             style: kHeading6.copyWith(
                               color: Colors.white.withOpacity(0.8),
                               fontSize: 13,

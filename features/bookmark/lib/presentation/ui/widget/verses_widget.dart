@@ -101,7 +101,7 @@ class _VersesWidgetState extends State<VersesWidget> {
                   ),
                   child: Center(
                     child: Text(
-                      'Surah ${widget.bookmark.surah}, Ayat ${widget.bookmark.inSurah}',
+                      'Surah ${widget.bookmark.surah}, Verse ${widget.bookmark.inSurah}',
                       style: kHeading6.copyWith(
                         color: Colors.white,
                         fontSize: 12.0,
@@ -193,10 +193,10 @@ class _VersesWidgetState extends State<VersesWidget> {
 
                         context.showCustomFlashMessage(
                           status: 'success',
-                          title: 'Hapus Bookmark Ayat',
+                          title: 'Remove Bookmark Verse',
                           darkTheme: widget.prefSetProvider.isDarkTheme,
                           message:
-                              'Surah ${widget.bookmark.surah} Ayat ${widget.bookmark.inSurah} berhasil dihapus dari Bookmark',
+                              'Surah ${widget.bookmark.surah} Verse ${widget.bookmark.inSurah} successfully removed from Bookmark',
                         );
                       } else {
                         await context
@@ -222,10 +222,10 @@ class _VersesWidgetState extends State<VersesWidget> {
                             );
                         context.showCustomFlashMessage(
                           status: 'success',
-                          title: 'Tambah Bookmark Ayat',
+                          title: 'Add Bookmark Verse',
                           darkTheme: widget.prefSetProvider.isDarkTheme,
                           message:
-                              'Surah ${widget.bookmark.surah} Ayat ${widget.bookmark.inSurah} berhasil ditambah ke Bookmark',
+                              'Surah ${widget.bookmark.surah} Verse ${widget.bookmark.inSurah} successfully added to Bookmark',
                         );
                       }
 

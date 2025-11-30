@@ -29,7 +29,7 @@ class OnBoardScreen extends StatelessWidget {
               const SizedBox(height: 16.0),
               ShowUpAnimation(
                 child: Text(
-                  'Pelajari Quran dan\nBacalah sekali setiap hari',
+                  'Learn the Quran and\nRead it once every day',
                   textAlign: TextAlign.center,
                   style: kHeading6.copyWith(
                     fontSize: 18.0,
@@ -74,7 +74,7 @@ class OnBoardScreen extends StatelessWidget {
                           child: Consumer<PreferenceSettingsProvider>(
                             builder: (context, prefSetProvider, _) {
                               return Text(
-                                ' Mulai Yuk! ',
+                                ' Get Started ',
                                 style: kHeading6.copyWith(
                                     color: prefSetProvider.isDarkTheme
                                         ? kBlackPurple

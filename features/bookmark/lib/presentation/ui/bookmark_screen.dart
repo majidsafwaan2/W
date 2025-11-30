@@ -65,7 +65,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                               ),
                               const SizedBox(width: 18.0),
                               Text(
-                                'Bookmark Ayat',
+                                'Bookmarked Verses',
                                 style: kHeading6.copyWith(
                                   fontSize: 20.0,
                                   fontWeight: FontWeight.bold,
@@ -94,7 +94,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                                       const SizedBox(height: 10.0),
                                       ShowUpAnimation(
                                         child: Text(
-                                          'Bookmark Kosong',
+                                          'No Bookmarks',
                                           style: kHeading6.copyWith(
                                             fontSize: 18.0,
                                             color: prefSetProvider.isDarkTheme
